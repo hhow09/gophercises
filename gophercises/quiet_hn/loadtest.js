@@ -2,7 +2,7 @@ import http from 'k6/http';
 import { sleep } from 'k6';
 // k6 run loadtest.js
 export const options = {
-  vus: 1000,
+  vus: 500,
   duration: '30s',
 };
 export default function () {

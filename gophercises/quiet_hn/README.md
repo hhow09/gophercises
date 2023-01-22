@@ -60,3 +60,50 @@ Experiment with how many goroutines you use. For instance, some of you will code
 *Note: You can limit your workers via channels, or with something like the [x/sync/semaphore](https://godoc.org/golang.org/x/sync/semaphore) package.*
 
 You can also look into ways to improve your cache. For instance, imagine we have a cache that we invalidate every 15 minutes, at which point we will replace all the values in it when we receive the next web request. This means that the next web request will be slow because it has to wait on us to repopulate the cache. One way to improve this experience is to always keep a valid cache, which can be done by creating the new cache BEFORE the old one expires, then rotating which cache we use. Now if we were to update and rotate the caches every 10 minutes, it is very unlikely that our currently in-use cache will ever exceed the 15 minute deadline and our users won't ever see an noticeable slowdown. 
+
+## Load Test Result
+### Mutex
+```
+running (0m30.8s), 000/500 VUs, 14189 complete and 0 interrupted iterations
+default ✓ [======================================] 500 VUs  30s
+
+     data_received..................: 91 MB  3.0 MB/s
+     data_sent......................: 1.1 MB 37 kB/s
+     http_req_blocked...............: avg=8.04ms   min=0s    med=3µs     max=199.21ms p(90)=9µs      p(95)=86.33ms 
+     http_req_connecting............: avg=7.82ms   min=0s    med=0s      max=199.15ms p(90)=0s       p(95)=85.12ms 
+     http_req_duration..............: avg=64.77ms  min=0s    med=45.24ms max=301.09ms p(90)=175.51ms p(95)=219.82ms
+       { expected_response:true }...: avg=66.71ms  min=173µs med=48.36ms max=301.09ms p(90)=179.97ms p(95)=220.85ms
+     http_req_failed................: 4.60%  ✓ 654        ✗ 13535
+     http_req_receiving.............: avg=676.48µs min=0s    med=30µs    max=59.89ms  p(90)=1.25ms   p(95)=3.01ms  
+     http_req_sending...............: avg=235.74µs min=0s    med=11µs    max=61.45ms  p(90)=305.4µs  p(95)=1.35ms  
+     http_req_tls_handshaking.......: avg=0s       min=0s    med=0s      max=0s       p(90)=0s       p(95)=0s      
+     http_req_waiting...............: avg=63.86ms  min=0s    med=44.26ms max=300.97ms p(90)=175.41ms p(95)=219.08ms
+     http_reqs......................: 14189  460.998545/s
+     iteration_duration.............: avg=1.07s    min=1s    med=1.06s   max=1.3s     p(90)=1.18s    p(95)=1.22s   
+     iterations.....................: 14189  460.998545/s
+     vus............................: 500    min=500      max=500
+     vus_max........................: 500    min=500      max=500
+```
+
+### RWMutex in Cache
+```
+running (0m31.0s), 000/500 VUs, 14500 complete and 0 interrupted iterations
+default ✓ [======================================] 500 VUs  30s
+
+     data_received..................: 94 MB  3.0 MB/s
+     data_sent......................: 1.2 MB 37 kB/s
+     http_req_blocked...............: avg=3.76ms   min=0s    med=3µs     max=102.96ms p(90)=7µs      p(95)=39.13ms 
+     http_req_connecting............: avg=3.56ms   min=0s    med=0s      max=101.67ms p(90)=0s       p(95)=38.14ms 
+     http_req_duration..............: avg=62.75ms  min=0s    med=55.87ms max=247.55ms p(90)=116.28ms p(95)=150.92ms
+       { expected_response:true }...: avg=64.7ms   min=178µs med=57.04ms max=247.55ms p(90)=117.56ms p(95)=153.62ms
+     http_req_failed................: 3.97%  ✓ 577        ✗ 13923
+     http_req_receiving.............: avg=411.26µs min=0s    med=19µs    max=30.8ms   p(90)=535.1µs  p(95)=1.5ms   
+     http_req_sending...............: avg=254.92µs min=0s    med=10µs    max=45.03ms  p(90)=312.1µs  p(95)=1.04ms  
+     http_req_tls_handshaking.......: avg=0s       min=0s    med=0s      max=0s       p(90)=0s       p(95)=0s      
+     http_req_waiting...............: avg=62.09ms  min=0s    med=55.08ms max=247.49ms p(90)=115.68ms p(95)=150.53ms
+     http_reqs......................: 14500  467.202603/s
+     iteration_duration.............: avg=1.06s    min=1s    med=1.06s   max=1.26s    p(90)=1.12s    p(95)=1.15s   
+     iterations.....................: 14500  467.202603/s
+     vus............................: 500    min=500      max=500
+     vus_max........................: 500    min=500      max=500
+```
