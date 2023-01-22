@@ -7,12 +7,21 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/hhow09/gophercises/gophercises/quiet_hn/cache"
 	"github.com/hhow09/gophercises/gophercises/quiet_hn/hn"
 )
+
+func debug(s string) {
+	debug := os.Getenv("DEBUG")
+	if debug == "1" {
+		fmt.Println(s)
+	}
+}
 
 func main() {
 	// parse flags
@@ -32,8 +41,14 @@ func main() {
 }
 
 func handler(numStories int, tpl *template.Template) http.HandlerFunc {
+	memcache := cache.NewInMemoryCache()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+		if v := memcache.Get(cache.TOP_STORIES); v != nil {
+			debug("cache hit")
+			renderTemplate(w, tpl, v.([]item), start)
+			return
+		}
 		var client hn.Client
 		ids, err := client.TopItems()
 		if err != nil {
@@ -75,17 +90,21 @@ func handler(numStories int, tpl *template.Template) http.HandlerFunc {
 				break
 			}
 		}
-
-		data := templateData{
-			Stories: sortedStories,
-			Time:    time.Since(start),
-		}
-		err = tpl.Execute(w, data)
-		if err != nil {
-			http.Error(w, "Failed to process the template", http.StatusInternalServerError)
-			return
-		}
+		memcache.Set(cache.TOP_STORIES, sortedStories)
+		renderTemplate(w, tpl, sortedStories, start)
 	})
+}
+
+func renderTemplate(w http.ResponseWriter, tpl *template.Template, stories []item, start time.Time) {
+	data := templateData{
+		Stories: stories,
+		Time:    time.Since(start),
+	}
+	err := tpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, "Failed to process the template", http.StatusInternalServerError)
+		return
+	}
 }
 
 func isStoryLink(item item) bool {
