@@ -3,4 +3,5 @@ go 1.19
 use (
     ./gophercises/quiet_hn
     ./gophercises/quiz-game
+    ./gophercises/link-parser
 )
