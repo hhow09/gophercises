@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <title>Gin Hello</title>
+    <script>
+        var ws = new WebSocket("ws://localhost:8080/ping");  
+        // onOpen被觸發時, 去嘗試連線 
+        ws.onopen = function(evt) {  
+            console.log("Connection open ...");  
+            ws.send("Hello WebSockets!");  
+        };  
+        // onMessage被觸發時, 來接收ws server傳來的訊息  
+        ws.onmessage = function(evt) {  
+            console.log("Received Message: " + evt.data);  
+            const newListItem = document.createElement("p");
+            newListItem.innerText = "Received: "+evt.data;
+            document.getElementById("logs").appendChild(newListItem);
+        };  
+
+        // 每秒發出一個現在時間的訊息
+        var timeInterval = setInterval(() => {
+            console.log('ws send')
+            const msg = Date.now()
+            const newListItem = document.createElement("p");
+            newListItem.innerText = "Sending: "+msg;
+            document.getElementById("logs").appendChild(newListItem);
+            ws.send(msg)
+            
+        }, 2000)
+
+        function closeConn(){
+            ws.send("close");  
+        }
+
+        // 由ws server發出的onClose事件  
+        ws.onclose = function(evt) {
+            clearInterval(timeInterval)
+            console.log("Connection closed.");  
+        };  
+</script>
+</head>
+<body>
+<h1>Hi</h1>
+<button onclick="closeConn()">Close connection</button>
+<div id="logs">
+    <h2>logs</h2>
+</div>
+</body>
+</html>
