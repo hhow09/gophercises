@@ -2,6 +2,7 @@ go 1.19
 
 use (
     ./ws_demo
+    ./GoVirtualFilesystem
     ./gophercises/quiet_hn
     ./gophercises/quiz-game
     ./gophercises/link-parser
