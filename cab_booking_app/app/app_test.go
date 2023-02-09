@@ -35,4 +35,6 @@ func TestMatch(t *testing.T) {
 	cab2, err := app.BookCab(rider2, dest)
 	assert.Equal(t, err, nil)
 	assert.Equal(t, cab2, 1)
+
+	// TODO trip history
 }
