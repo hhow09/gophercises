@@ -25,8 +25,8 @@
       if ({{ .Debug }}) {
         debug = true
       }
-      var socket = io(); // same domain
-      var s2 = io("/chat");
+      var socket = io("/"); // same origin
+      var s2 = io("/public_chat");
       socket.on('connected', function(id){
         $('#messages').append($('<li>').text("user-"+id+": "+ 'connected'));
       });

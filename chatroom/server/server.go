@@ -6,74 +6,103 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hhow09/gophercises/chatroom/db"
 
 	"os"
 
 	socketio "github.com/googollee/go-socket.io"
 )
 
-func InitServer() (*socketio.Server, error) {
-	router := gin.New()
-	router.LoadHTMLGlob("./static/*")
+const (
+	MAIN_NS        = "/"
+	PUBLIC_CHAT_NS = "/public_chat"
+)
 
-	server := socketio.NewServer(nil)
+type Server struct {
+	store        *db.Store
+	router       *gin.Engine
+	socketServer *socketio.Server
+}
 
-	_, err := server.Adapter(&socketio.RedisAdapterOptions{
+func NewServer(store *db.Store) (*Server, error) {
+	socketServer := socketio.NewServer(nil)
+	_, err := socketServer.Adapter(&socketio.RedisAdapterOptions{
 		Addr:   fmt.Sprintf("%v:%v", os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT")),
 		DB:     0,
 		Prefix: "socket.io",
 	})
 	if err != nil {
-		log.Println("error:", err)
+		log.Fatal("init socket server error:", err)
 		return nil, err
 	}
+	server := &Server{store: store, router: gin.New(), socketServer: socketServer}
+	err = server.setupSocketRouter()
+	if err != nil {
+		log.Fatal("init socket server error:", err)
+		return nil, err
+	}
+	server.setupHTTPRouter()
 
-	server.OnConnect("/", func(s socketio.Conn) error {
-		log.Println("user connected ID:", s.ID())
-		ok := server.JoinRoom("/", "bcast", s)
+	return server, nil
+}
+
+func (s *Server) setupSocketRouter() error {
+	s.socketServer.OnConnect(MAIN_NS, func(sc socketio.Conn) error {
+		log.Println("user connected ID:", sc.ID())
+		ok := s.socketServer.JoinRoom(MAIN_NS, "bcast", sc)
 		fmt.Println("join room bcast", ok)
 
-		go func(s socketio.Conn) {
-			server.BroadcastToRoom("/", "bcast", "connected", s.ID())
-		}(s)
+		go func(sc socketio.Conn) {
+			s.socketServer.BroadcastToRoom(MAIN_NS, "bcast", "connected", sc.ID())
+		}(sc)
 		return nil
 	})
 
-	// set
-	server.OnEvent("/chat", "msg", func(s socketio.Conn, msg string) string {
-		server.BroadcastToRoom("/", "bcast", "said", s.ID(), msg) // broadcast to all users
+	s.socketServer.OnEvent(PUBLIC_CHAT_NS, "msg", func(sc socketio.Conn, msg string) string {
+		s.socketServer.BroadcastToRoom(MAIN_NS, "bcast", "said", sc.ID(), msg) // broadcast to all users
 		return "recv " + msg
 	})
 
-	server.OnEvent("/", "bye", func(s socketio.Conn) string {
+	s.socketServer.OnEvent(MAIN_NS, "bye", func(s socketio.Conn) string {
 		last := s.Context().(string)
 		s.Emit("bye", last)
 		s.Close()
 		return last
 	})
 
-	server.OnError("/", func(s socketio.Conn, e error) {
+	s.socketServer.OnError(MAIN_NS, func(s socketio.Conn, e error) {
 		log.Println("meet error:", e)
 	})
 
-	server.OnDisconnect("/", func(s socketio.Conn, reason string) {
+	s.socketServer.OnDisconnect(MAIN_NS, func(s socketio.Conn, reason string) {
 		log.Println("closed user ID:", s.ID(), reason)
 	})
 
-	router.GET("/socket.io/*any", gin.WrapH(server))
-	router.POST("/socket.io/*any", gin.WrapH(server))
-	router.GET("/chatroom", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "chat.tmpl", gin.H{"Debug": true})
+	return nil
+}
+
+func (s *Server) setupHTTPRouter() {
+	s.router.LoadHTMLGlob("./static/*")
+	s.router.GET("/socket.io/*any", AuthMiddleware(), gin.WrapH(s.socketServer))
+	s.router.POST("/socket.io/*any", AuthMiddleware(), gin.WrapH(s.socketServer))
+	s.router.GET("/public_chat", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "public_chat.tmpl", gin.H{"Debug": true})
 	})
+}
+
+func (s *Server) Serve() error {
 	go func() {
-		if err := server.Serve(); err != nil {
+		if err := s.socketServer.Serve(); err != nil {
 			log.Fatalf("socketio listen error: %s\n", err)
+		} else {
+			fmt.Println("socketio success listen")
 		}
 	}()
-	defer server.Close()
-	if err := router.Run(fmt.Sprintf(":%v", os.Getenv("WEB_HOST"))); err != nil {
+	defer s.socketServer.Close()
+	if err := s.router.Run(fmt.Sprintf(":%v", os.Getenv("WEB_HOST"))); err != nil {
 		log.Fatal("failed run app: ", err)
-		return nil, err
+		return err
 	}
-	return server, nil
+	fmt.Printf("visit http://localhost:%v/public_chat\n", os.Getenv("WEB_HOST"))
+	return nil
 }
