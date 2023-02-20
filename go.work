@@ -3,6 +3,7 @@ go 1.19
 use (
     ./ws_demo
     ./consistent-hash
+    ./concurrent-api-req
     ./chatroom
     ./GoVirtualFilesystem
     ./gophercises/quiet_hn
