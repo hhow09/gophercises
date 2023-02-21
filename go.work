@@ -6,6 +6,7 @@ use (
     ./concurrent-api-req
     ./chatroom
     ./GoVirtualFilesystem
+    ./rabbitmq-tutorials
     ./gophercises/quiet_hn
     ./gophercises/quiz-game
     ./gophercises/link-parser
