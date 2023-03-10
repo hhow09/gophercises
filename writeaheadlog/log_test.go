@@ -28,6 +28,7 @@ func TestLog(t *testing.T) {
 			c.Segment.MaxStoreBytes = 32
 			log, err := NewLog(dir, c)
 			require.NoError(t, err)
+			defer log.Close()
 
 			fn(t, log)
 		})

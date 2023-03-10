@@ -1,4 +1,24 @@
 # Write Ahead Log
+## API
+- `Append()`
+- `Read(offset uint32)`
+- `Close()`
+
+## Basic Usage
+```go
+os.Mkdir(dir, mode)
+defer os.RemoveAll(dir)
+c := Config{}
+c.Segment.MaxStoreBytes = 
+log, err := NewLog(dir, c)
+defer log.Close()
+record := Record{
+		Value: []byte("hello world!"),
+}
+off, err := log.Append(append)
+read, err := log.Read(off) // {Value: "hello world!", Offset: 0}
+
+```
 
 ## Components
 - Record: the data stored in file.
@@ -26,12 +46,12 @@
   offset    position
 ```
 
-### Relative Index Offset
+## Relative Index Offset
 - in order to save storage (`uint32`), the index entry offset is the relative offset to `baseOffset` of index file.
 - index file name: `{baseOffset}.index`
 
 
-### [gommap](http://labix.org/gommap)
+## [gommap](http://labix.org/gommap)
 - [mmap(2) — Linux manual page](https://man7.org/linux/man-pages/man2/mmap.2.html)
 - directly work with memory mapped files
 - ref: [Discovering and exploring mmap using Go](https://brunocalza.me/discovering-and-exploring-mmap-using-go/)
