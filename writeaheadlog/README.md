@@ -1,7 +1,7 @@
 # Write Ahead Log
 
 ## Components
-- Record: the data stored in our log.
+- Record: the data stored in file.
 - Store: the file store records in.
 - Index: the file we store index entries in.
 - Segment: the abstraction that ties a store and an index together.
@@ -12,9 +12,29 @@
 - Segment = Store + Index
 - Store = File = M * Record
 
+## Example
+### a Record
+```json
+{"Offset": 15, "Value": "Hello World"}
+```
 
-## gommap
-http://labix.org/gommap
+### a Index entry
+```
+|  15        300     |
+  uint32    uint64
+  4 byte    8 byte
+  offset    position
+```
+
+### Relative Index Offset
+- in order to save storage (`uint32`), the index entry offset is the relative offset to `baseOffset` of index file.
+- index file name: `{baseOffset}.index`
+
+
+### [gommap](http://labix.org/gommap)
+- [mmap(2) — Linux manual page](https://man7.org/linux/man-pages/man2/mmap.2.html)
+- directly work with memory mapped files
+- ref: [Discovering and exploring mmap using Go](https://brunocalza.me/discovering-and-exploring-mmap-using-go/)
 
 ## Ref
 - [Distributed Services with Go](https://www.oreilly.com/library/view/distributed-services-with/9781680508376/) `Chapter 3. Write a Log Package`
