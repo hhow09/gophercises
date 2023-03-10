@@ -49,6 +49,7 @@ func newSegment(dir string, baseOffset uint32, config Config) (*segment, error) 
 	return s, nil
 }
 
+// append record to the store file and update index
 func (s *segment) Append(record Record) (offset uint32, err error) {
 	cur := s.nextOffset
 	record.Offset = cur
@@ -85,6 +86,7 @@ func (s *segment) Read(off uint32) (*Record, error) {
 	return &record, err
 }
 
+// close the index and store file discriptor
 func (s *segment) Close() error {
 	if s.index != nil {
 		if err := s.index.Close(); err != nil {

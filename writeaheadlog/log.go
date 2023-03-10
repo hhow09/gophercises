@@ -37,6 +37,7 @@ func NewLog(dir string, c Config) (*Log, error) {
 	return l, l.setup()
 }
 
+// read the exisitng file into segements in order to Read()
 func (l *Log) setup() error {
 	files, err := ioutil.ReadDir(l.Dir)
 	if err != nil {
@@ -85,6 +86,7 @@ func (l *Log) newSegment(off uint32) error {
 	return nil
 }
 
+// append record to log
 func (l *Log) Append(record Record) (uint32, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -98,6 +100,7 @@ func (l *Log) Append(record Record) (uint32, error) {
 	return off, err
 }
 
+// read the record given offset
 func (l *Log) Read(off uint32) (*Record, error) {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
@@ -112,6 +115,7 @@ func (l *Log) Read(off uint32) (*Record, error) {
 	return l.segments[idx].Read(off)
 }
 
+// close the file discriptor of index and store
 func (l *Log) Close() error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -139,6 +143,7 @@ func (l *Log) MaxOffset() (uint32, error) {
 	return off - 1, nil
 }
 
+// return a reader of all records
 func (l *Log) Reader() io.Reader {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
@@ -155,6 +160,7 @@ type fileReader struct {
 	off int64
 }
 
+// implement io.Reader
 func (o *fileReader) Read(p []byte) (int, error) {
 	n, err := o.ReadAt(p, o.off)
 
@@ -162,6 +168,7 @@ func (o *fileReader) Read(p []byte) (int, error) {
 	return n, err
 }
 
+// remove segements which offset less than given lowest offset.
 func (l *Log) Truncate(lowest uint32) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()

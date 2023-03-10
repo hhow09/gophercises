@@ -13,7 +13,7 @@
 - Store = File = M * Record
 
 ## Example
-### a Record
+### a [Record](./def.go)
 ```json
 {"Offset": 15, "Value": "Hello World"}
 ```
