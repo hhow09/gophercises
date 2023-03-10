@@ -92,3 +92,9 @@ func (s *store) Close() error {
 	}
 	return s.File.Close()
 }
+
+func (s *store) Flush() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.buf.Flush()
+}
