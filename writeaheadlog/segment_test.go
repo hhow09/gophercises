@@ -52,16 +52,15 @@ func TestSegment(t *testing.T) {
 	_, err = s.Append(want)
 	require.Equal(t, io.EOF, err)
 
-	// maxed index
+	// index size full
 	require.True(t, s.IsFull())
 
 	c.Segment.MaxStoreBytes = uint64(len(want.Value) * 3)
 	c.Segment.MaxIndexBytes = 1024
-	fmt.Println("h", c.Segment.MaxStoreBytes)
 
 	s, err = newSegment(dir, 16, c)
 	require.NoError(t, err)
-	// maxed store
+	// full store
 	require.True(t, s.IsFull())
 
 	// remove segement and recreate new one

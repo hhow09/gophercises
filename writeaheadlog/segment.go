@@ -100,11 +100,11 @@ func (s *segment) Close() error {
 }
 
 func (s *segment) IsFull() bool {
-	fmt.Println(s.store.size, s.config.Segment.MaxStoreBytes)
 	return s.store.size >= s.config.Segment.MaxStoreBytes ||
 		s.index.size >= s.config.Segment.MaxIndexBytes
 }
 
+// remove the underlying index and store file
 func (s *segment) Remove() error {
 	if err := s.Close(); err != nil {
 		return err
