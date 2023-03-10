@@ -5,6 +5,7 @@ use (
     ./concurrent-api-req
     ./chatroom
     ./GoVirtualFilesystem
+    ./writeaheadlog
     ./gophercises/quiet_hn
     ./gophercises/quiz-game
     ./gophercises/link-parser
