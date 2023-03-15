@@ -1,10 +1,12 @@
 package writeaheadlog
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path"
+
+	api "github.com/hhow09/gophercises/writeaheadlog/api/v1"
+	"google.golang.org/protobuf/proto"
 )
 
 type segment struct {
@@ -50,10 +52,10 @@ func newSegment(dir string, baseOffset uint32, config Config) (*segment, error) 
 }
 
 // append record to the store file and update index
-func (s *segment) Append(record Record) (offset uint32, err error) {
+func (s *segment) Append(record *api.Record) (offset uint32, err error) {
 	cur := s.nextOffset
 	record.Offset = cur
-	p, err := json.Marshal(record)
+	p, err := proto.Marshal(record)
 	if err != nil {
 		return 0, err
 	}
@@ -72,7 +74,7 @@ func (s *segment) Append(record Record) (offset uint32, err error) {
 	return cur, nil
 }
 
-func (s *segment) Read(off uint32) (*Record, error) {
+func (s *segment) Read(off uint32) (*api.Record, error) {
 	pos, err := s.index.Read(off - s.baseOffset)
 	if err != nil {
 		return nil, err
@@ -81,8 +83,8 @@ func (s *segment) Read(off uint32) (*Record, error) {
 	if err != nil {
 		return nil, err
 	}
-	var record Record
-	err = json.Unmarshal(p, &record)
+	var record api.Record
+	err = proto.Unmarshal(p, &record)
 	return &record, err
 }
 

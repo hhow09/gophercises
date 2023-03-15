@@ -1,12 +1,13 @@
 package writeaheadlog
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"testing"
 
+	api "github.com/hhow09/gophercises/writeaheadlog/api/v1"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestLog(t *testing.T) {
@@ -79,18 +80,19 @@ func testInitExisting(t *testing.T, o *Log) {
 }
 
 func testReader(t *testing.T, log *Log) {
-	r := randomRecord()
-	off, err := log.Append(r)
+	append := randomRecord()
+	off, err := log.Append(append)
 	require.NoError(t, err)
 	require.Equal(t, uint32(0), off)
 
 	reader := log.Reader()
 	b, err := ioutil.ReadAll(reader)
 	require.NoError(t, err)
-	read := Record{}
-	err = json.Unmarshal(b[lenWidth:], &read)
+
+	read := &api.Record{}
+	err = proto.Unmarshal(b[lenWidth:], read)
 	require.NoError(t, err)
-	require.Equal(t, r.Value, read.Value)
+	require.Equal(t, append.Value, read.Value)
 }
 
 func testTruncate(t *testing.T, log *Log) {

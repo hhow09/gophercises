@@ -1,4 +1,7 @@
 # Write Ahead Log
+- write ahead log implemtation with go and protobuf.
+- index is used to allow `O(logN)` search.
+
 ## API
 - `Append()`
 - `Read(offset uint32)`
@@ -6,18 +9,14 @@
 
 ## Basic Usage
 ```go
-os.Mkdir(dir, mode)
-defer os.RemoveAll(dir)
-c := Config{}
-c.Segment.MaxStoreBytes = 
-log, err := NewLog(dir, c)
+os.Mkdir(log_dir, mode) // log directory
+log, err := NewLog(log_dir, Config{})
 defer log.Close()
-record := Record{
-		Value: []byte("hello world!"),
-}
+record := &api.Record{
+		Value: []byte("hello world"),
+	}
 off, err := log.Append(append)
 read, err := log.Read(off) // {Value: "hello world!", Offset: 0}
-
 ```
 
 ## Components
@@ -33,7 +32,7 @@ read, err := log.Read(off) // {Value: "hello world!", Offset: 0}
 - Store = File = M * Record
 
 ## Example
-### a [Record](./def.go)
+### a `Record`
 ```json
 {"Offset": 15, "Value": "Hello World"}
 ```
@@ -55,6 +54,10 @@ read, err := log.Read(off) // {Value: "hello world!", Offset: 0}
 - [mmap(2) — Linux manual page](https://man7.org/linux/man-pages/man2/mmap.2.html)
 - directly work with memory mapped files
 - ref: [Discovering and exploring mmap using Go](https://brunocalza.me/discovering-and-exploring-mmap-using-go/)
+
+## Development
+1. [install protobuf](https://grpc.io/docs/protoc-installation/)
+2. generate protobuf go code `make comple`
 
 ## Ref
 - [Distributed Services with Go](https://www.oreilly.com/library/view/distributed-services-with/9781680508376/) `Chapter 3. Write a Log Package`

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	api "github.com/hhow09/gophercises/writeaheadlog/api/v1"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,9 +18,9 @@ func setupDir(i int) string {
 	return dir
 }
 
-func randomRecord() Record {
+func randomRecord() *api.Record {
 	rand.Seed(time.Now().UnixNano())
-	return Record{
+	return &api.Record{
 		Value: []byte(fmt.Sprintf("hello world %d", rand.Int())),
 	}
 }

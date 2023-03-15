@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	api "github.com/hhow09/gophercises/writeaheadlog/api/v1"
 )
 
 type Log struct {
@@ -87,7 +89,8 @@ func (l *Log) newSegment(off uint32) error {
 }
 
 // append record to log
-func (l *Log) Append(record Record) (uint32, error) {
+// return the (offset, error)
+func (l *Log) Append(record *api.Record) (uint32, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	off, err := l.activeSegment.Append(record)
@@ -101,7 +104,7 @@ func (l *Log) Append(record Record) (uint32, error) {
 }
 
 // read the record given offset
-func (l *Log) Read(off uint32) (*Record, error) {
+func (l *Log) Read(off uint32) (*api.Record, error) {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 	idx := sort.Search(len(l.segments), func(i int) bool { return l.segments[i].baseOffset >= off })
